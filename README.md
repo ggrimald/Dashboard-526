@@ -4,10 +4,10 @@ Game analytics dashboard built with Streamlit. Data is fetched from Firebase, pr
 
 ## Live App
 
-https://protocol-recharge-526.streamlit.app/
+https://protocol-recharge-526.streamlit.app/  
 (Data may take a few seconds to load)
 
 ## Run locally
 
-pip install -r requirements.txt
+pip install -r requirements.txt  
 streamlit run app.py
