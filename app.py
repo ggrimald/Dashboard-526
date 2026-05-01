@@ -223,73 +223,120 @@ FIREBASE_URL = "https://mygame1-cfc60-default-rtdb.firebaseio.com/.json"
 def load_data():
     # Fetch data from Firebase with timeout handling
     try:
+
         resp = requests.get(FIREBASE_URL, timeout=10)
+
     except Exception as e:
+
         st.error(f"Firebase request error: {e}")
+
         return pd.DataFrame()
 
     # Validate HTTP response
+
     if resp.status_code != 200:
+
         st.error(f"Firebase request failed with status {resp.status_code}")
+
         return pd.DataFrame()
 
     raw = resp.json()
 
     # Validate response structure
+
     if not raw or not isinstance(raw, dict):
+
         st.warning("Firebase returned empty or invalid data")
+
         return pd.DataFrame()
 
     rows = []
 
     # Iterate through sessions
+
     for session_id, session_data in raw.items():
+
         if not isinstance(session_data, dict):
+
             continue
 
         # Iterate through event types
+
         for event_type, event_data in session_data.items():
 
-            # Normalize event_data to a list (handle both list and dict cases)
+            # Normalize event_data to list (handle both list and dict)
+
             if isinstance(event_data, list):
+
                 events = event_data
+
             elif isinstance(event_data, dict):
+
                 events = [event_data]
+
             else:
+
                 continue
 
             # Extract individual events
+
             for i, event in enumerate(events):
+
                 if not isinstance(event, dict):
+
                     continue
 
                 row = {
+
                     "session_id": session_id,
+
                     "event_type": str(event_type),
+
                     "index": i
+
                 }
 
                 row.update(event)
+
                 rows.append(row)
 
-    # Return empty DataFrame if no valid rows found
+    # Return empty DataFrame if no valid rows
+
     if not rows:
+
         return pd.DataFrame()
 
     df = pd.DataFrame(rows)
 
     # Safely convert numeric columns
+
     numeric_cols = [
+
         "m_NewValue", "m_OldValue", "m_LevelTime",
+
         "m_PositionX", "m_PositionY", "m_PositionZ"
+
     ]
 
     for col in numeric_cols:
+
         if col in df.columns:
+
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    return df
+    # Convert list-type values to tuples (required for Streamlit cache hashing)
 
+    for col in df.columns:
+
+        if df[col].apply(lambda x: isinstance(x, list)).any():
+
+            df[col] = df[col].apply(
+
+                lambda x: tuple(x) if isinstance(x, list) else x
+
+            )
+
+    return df
 
 # ─────────────────────────────────────────────
 #  2. COMPUTE ALL METRICS
